@@ -1,16 +1,15 @@
-const { test, expect } = require('@playwright/test');
-require('dotenv').config();
+const { expect } = require('@playwright/test');
 
 async function waitForPageStable(page) {
   await page.waitForLoadState('load');
   await page.waitForLoadState('networkidle');
 }
 
-test('eBay Login Flow', async ({ page }) => {
+async function login(page) {
 
   await page.goto('/');
   await page.waitForTimeout(1500);
-  
+
   const signInLink = page.getByRole('link', { name: 'Sign in' });
 
   await Promise.all([
@@ -56,5 +55,6 @@ test('eBay Login Flow', async ({ page }) => {
   }
 
   await expect(page.locator('.gh-identity__greeting')).toBeVisible();
+}
 
-});
+module.exports = { login };
