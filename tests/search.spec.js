@@ -1,40 +1,24 @@
-const { test, expect } = require('@playwright/test');
+const { test } = require('@playwright/test');
 require('dotenv').config();
-const { login } = require('./login');
 
-test('Search and open third result', async ({ page, context }) => {
+const { LoginPage } = require('../pages/LoginPage');
+const { SearchPage } = require('../pages/SearchPage');
+const { ProductPage } = require('../pages/ProductPage');
 
-  await login(page);
+test('Search and validate similar items secticon in product page', async ({ page, context }) => {
 
-  await expect(
-    page.locator('#gh-ac[placeholder="Search for anything"]')
-  ).toBeVisible();
+  const loginPage = new LoginPage(page);
+  const searchPage = new SearchPage(page);
 
-  await page.type('#gh-ac', 'Wallet', { delay: 100 });
+  await loginPage.login(process.env.USERNAME, process.env.PASSWORD);
 
-  const searchButton = page.locator('.gh-search-button__label');
+  await searchPage.searchFor('Wallet');
 
-  await Promise.all([
-    page.waitForURL('**/sch/**'),
-    searchButton.click()
-  ]);
+  const productTab = await searchPage.openNthResult(1, context);
 
-  const results = page.locator(
-    'ul.srp-results.srp-grid.clearfix > li.s-card.s-card--vertical'
-  );
+  const productPage = new ProductPage(productTab);
 
-  await results.first().waitFor({ state: 'visible' });
-
-  const count = await results.count();
-  expect(count).toBeGreaterThan(2);
-
-  const thirdResult = results.nth(2);
-
-  const [newPage] = await Promise.all([
-    context.waitForEvent('page'),
-    thirdResult.click()
-  ]);
-
-  await newPage.waitForLoadState('domcontentloaded');
-
+  await productPage.validateUrlContainsWallet();
+  await productPage.validateTitleContainsWallet();
+  await productPage.validateSimilarItems();
 });
